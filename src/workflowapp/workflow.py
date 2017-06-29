@@ -3,7 +3,6 @@
 """Workflow tool application"""
 
 import os
-import argparse
 import logging
 import json
 import csv
@@ -16,9 +15,10 @@ from requests.packages.urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 
 
-home = os.path.expanduser("~")
+HOME_PATH = os.path.expanduser("~")
 INVENTORY_URL = ("https://raw.githubusercontent.com/enigma-io/" +
                  "workflow-interview-challenge/master/inventory.tsv")
+DEFAULT_CONFIG_PATH = "../../config/workflows.json"
 
 
 def logger_config():
@@ -31,17 +31,25 @@ def logger_config():
     logging.info("Started")
 
 
-def parse_args_config():
-    parser = argparse.ArgumentParser(
-        description="WorkflowApp")
-#    parser.add_argument("-f", "--inputfile",
-#                        required=True, type=str, nargs="+",
-#                        help="Load input excel (.xlsx) file.")
-#    parser.add_argument("-t", "--type", required=True,
-#                        choices=['translations', 'modules'],
-#                        type=str, nargs="+",
-#                        help="Choose either 'translations' or 'modules'.")
-    return parser
+def load_settings(filepath):
+    logging.info("Loading configuation settings.")
+    settings = dict()
+    try:
+        with open(filepath, "r") as f:
+            settings = json.load(f)
+        return settings
+    except IOError as io:
+        logging.error("An error has occurred with writing file, %s", io)
+
+
+def get_active_workflow(settings):
+    logging.info("Loading active workflow.")
+    result = 0
+    for value in settings:
+        if value.get("active") is True:
+            result = value.get("id")
+            break
+    return result
 
 
 def _output_to_json_file(output_filename, textfile):
@@ -63,8 +71,6 @@ def get_inventory(url):
                 status_forcelist=[ 500, 502, 503, 504 ])
         session.mount('http://', HTTPAdapter(max_retries=session_retries))
         response = session.get(url)
-        # response = requests.get(url)
-        # response.raise_for_status()
         _output_to_json_file("data.json", response.text)
     except ValueError as ve:
         logging.error("An error with requesting api, %s", ve)
@@ -112,9 +118,8 @@ def run_statistics_on_column(inventory, column_name):
 
 def run():
     logger_config()
-    parser = parse_args_config()
-    args = parser.parse_args()
-    args_list = vars(args)
+    settings = load_settings(DEFAULT_CONFIG_PATH)
+    ACTIVE_WORKFLOWID = get_active_workflow(settings)
 
     try:
         get_inventory(INVENTORY_URL)
