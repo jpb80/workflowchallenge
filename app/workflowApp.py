@@ -66,14 +66,6 @@ def get_inventory(url):
         logging.error("An httperror has occurred, %s", he)
 
 
-# [{
-# "Volume 2015": {
-#   "Minimum": "2",
-#   "Maximum": "32",
-#   "Median": "36"
-# }
-# }]
-#
 def process_inventory(filename):
     with open(filename, "r") as jsonfile:
         inventory = json.load(jsonfile, encoding="utf-8")
