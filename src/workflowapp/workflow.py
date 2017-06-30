@@ -6,9 +6,6 @@ import os
 import logging
 import json
 import csv
-import shutil
-import distutils.core
-import subprocess
 import requests
 from requests.exceptions import ConnectionError
 from requests.packages.urllib3.util.retry import Retry
