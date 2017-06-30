@@ -1,0 +1,37 @@
+[{"id":1,
+  "name":"Workflow",
+  "version":1,
+  "operations":[
+    {"id":1,
+      "type":"network",
+      "description":"Fetch the document from a url.",
+      "input":"https://raw.githubusercontent.com/enigma-io/workflow-interview-challenge/master/",
+      "output":"/document",
+      "filename":"inventory.tsv",
+      "extra": [{}]
+    },
+    {"id":2,
+      "type":"format",
+      "description":"Reformat document into json format.",
+      "input":"/document",
+      "output":"/output",
+      "filename":"inventory.json",
+      "extra": [{}]
+    },
+    {"id":3,
+      "type":"compute",
+      "description":"Get the min, max, median values for a column.",
+      "location":"/output",
+      "filename":"stats.json",
+      "extra": [{"column_name":"Volume 2015"}]
+    },
+    {"id":4,
+      "type":"print",
+      "description":"Print the size of active output files.",
+      "input":"/output",
+      "output":"print",
+      "filename":"",
+      "extra": [{"units":"bytes"}]
+    }
+  ]
+}]
