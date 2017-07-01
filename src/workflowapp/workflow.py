@@ -32,36 +32,7 @@ def logger_config():
 
 
 def load_settings(filepath):
-    if filepath is None:
-        raise TypeError
-
-    if not os.path.isfile(filepath):
-        logging.error("The file does not exist or the path is incorrect, %s", io)
-        raise IOError
-
-    logging.info("Loading configuation settings from %s", filepath)
-    settings = dict()
-    try:
-        with open(filepath, "r") as f:
-            settings = json.load(f)
-        return settings
-    except IOError as io:
-        logging.error("An error has occurred with writing file, %s", io)
-
-
-def get_active_workflow(settings):
-    if sorted_values is None:
-        raise TypeError
-
-    logging.info("Loading active workflow")
-    result = 0
-    for value in settings:
-        if value is None:
-            raise TypeError
-        if value.get("active") is True:
-            result = value.get("id")
-            break
-    return result
+    _load_json_from_file(filepath)
 
 
 def _output_to_json_file(output_filename, textfile):
@@ -98,9 +69,15 @@ def get_inventory(url, jsonfile):
         logging.error("An httperror has occurred, %s", he)
     except ConnectionError as ce:
         logging.error("Max number of network retries, %s", ce)
+        logging.error("Exiting the program")
+        exit(1)
 
 
 def process_inventory(filepath):
+    _load_json_from_file(filepath)
+
+
+def _load_json_from_file(filepath):
     if filepath is None:
         raise TypeError
 
@@ -155,9 +132,9 @@ def run_statistics_on_column(inventory, column_name, jsonfile):
         values.append(row_dict.get(column_name))
 
     sorted_values = sorted(values, key=float, reverse=True)
-    values_dict = dict([("Maximum", str(_max(sorted_values))),
-                        ("Minimum", str(_min(sorted_values))),
-                        ("Median", str(_median(sorted_values)))])
+    values_dict = dict([("Maximum", _max(sorted_values)),
+                        ("Minimum", _min(sorted_values)),
+                        ("Median", _median(sorted_values))])
 
     try:
         with open(jsonfile, "w") as outfile:
@@ -177,7 +154,7 @@ def print_filesize(directory):
     try:
         files = os.listdir(directory)
         for a_file in files:
-            print "file: ", a_file, ", size: ", os.path.getsize(directory + a_file)
+            print "file: " + a_file + ", size: " + str(os.path.getsize(directory + a_file))
     except IOError as io:
         logging.error("An error has occurred with writing file, %s", io)
 

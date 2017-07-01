@@ -1,31 +1,44 @@
 #!/usr/bin/env python
 
-# Package app
-import app
 import unittest
+from mock import mock_open, patch
+import sys
+import os
+sys.path.insert(0, os.path.abspath("../src/workflowapp"))
 
-# Module from package app
-from app import helper
+import workflow
 
-
-class TestWombatMethods(unittest.TestCase):
-
-    def test_helper_get_status_success(self):
-
-        event = "testing event"
-        success_status = 0
-        return_status = helper.get_status(event, success_status)
-        self.assertEqual(return_status, 0)
+HERE = os.path.abspath(os.path.dirname(__file__))
 
 
-    def test_helper_get_status_failure(self):
+class WorkflowTests(unittest.TestCase):
 
-        event = "testing event"
-        failure_status = 2
-        return_status = helper.get_status(event, failure_status)
-        self.assertEqual(return_status, 2)
+    @patch("os.path.isfile")
+    @patch("json.load")
+    @patch("__builtin__.open", new_callable=mock_open())
+    def test_load_json_from_file(self, m, m_json, isfile):
+        return_value = workflow._load_json_from_file("file.json")
+        m.assert_called_with("file.json", "r")
 
 
+    @patch("os.path.isfile")
+    @patch("json.load")
+    @patch("__builtin__.open", new_callable=mock_open())
+    def test_process_inventory(self, m, m_json, isfile):
+        return_value = workflow.process_inventory("file.json")
+        m.assert_called_with("file.json", "r")
 
-suite = unittest.TestLoader().loadTestsFromTestCase(TestWombatMethods)
+
+    @patch("os.path.isfile")
+    @patch("json.load")
+    @patch("__builtin__.open", new_callable=mock_open())
+    def test_load_settings(self, m, m_json, isfile):
+        return_value = workflow.load_settings("file.json")
+        m.assert_called_with("file.json", "r")
+
+
+    def test_get_inventory(self);
+        return_value = workflow.get_inventory(url, jsonfile)
+
+suite = unittest.TestLoader().loadTestsFromTestCase(WorkflowTests)
 unittest.TextTestRunner(verbosity=2).run(suite)
