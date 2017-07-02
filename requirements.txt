@@ -1,4 +1,7 @@
 #
 ####### example-requirements.txt #######
 #
+mock
 requests
+future
+requests_mock
