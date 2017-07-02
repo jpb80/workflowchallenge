@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import unittest
+import requests_mock
+import requests
 from mock import mock_open, patch
 import sys
 import os
@@ -12,13 +14,6 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 
 
 class WorkflowTests(unittest.TestCase):
-
-    @patch("os.path.isfile")
-    @patch("json.load")
-    @patch("__builtin__.open", new_callable=mock_open())
-    def test_load_json_from_file(self, m, m_json, isfile):
-        return_value = workflow._load_json_from_file("file.json")
-        m.assert_called_with("file.json", "r")
 
 
     @patch("os.path.isfile")
@@ -37,8 +32,14 @@ class WorkflowTests(unittest.TestCase):
         m.assert_called_with("file.json", "r")
 
 
-    def test_get_inventory(self);
-        return_value = workflow.get_inventory(url, jsonfile)
+    # @requests_mock.Mocker()
+    # def test_get_inventory(self, m):
+    #     m.get('http://test.com', text='data')
+    #     response = requests.get("http://test.com").text
+    #     workflow.get_inventory("http://test.com", "path")
+    #     m.assert_called_with("http://test.com")
+
+
 
 suite = unittest.TestLoader().loadTestsFromTestCase(WorkflowTests)
 unittest.TextTestRunner(verbosity=2).run(suite)

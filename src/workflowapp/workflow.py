@@ -21,6 +21,7 @@ APP_DIR_PATH = "/".join(pathsplit)
 MAX_RETRIES = 3
 BACKOFF_FACTOR = 0.1
 
+
 def logger_config():
     logging.basicConfig(level=logging.INFO, format=("[###%(levelname)s] "
                                                     "%(asctime)s: "
@@ -32,7 +33,21 @@ def logger_config():
 
 
 def load_settings(filepath):
-    _load_json_from_file(filepath)
+    if filepath is None:
+        raise TypeError
+
+    if not os.path.isfile(filepath):
+        logging.error("The file does not exist, %s", io)
+        raise IOError
+
+    logging.info("Loading configuation settings from %s", filepath)
+    settings = dict()
+    try:
+        with open(filepath, "r") as f:
+            settings = json.load(f)
+        return settings
+    except IOError as io:
+        logging.error("An error has occ®urred with reading file, %s", io)
 
 
 def _output_to_json_file(output_filename, textfile):
@@ -57,12 +72,13 @@ def get_inventory(url, jsonfile):
     logging.info("Retrieve http request payload from %s", url)
     try:
         session = requests.Session()
-        session_retries = Retry(total=MAX_RETRIES,
-                backoff_factor=BACKOFF_FACTOR,
-                status_forcelist=[ 500, 502, 503, 504 ])
+        session_retries = Retry(
+            total=MAX_RETRIES,
+            backoff_factor=BACKOFF_FACTOR,
+            status_forcelist=[500, 502, 503, 504])
         session.mount('http://', HTTPAdapter(max_retries=session_retries))
         response = session.get(url)
-        _output_to_json_file(jsonfile, response.text)
+        return response.text
     except ValueError as ve:
         logging.error("An error with requesting api, %s", ve)
     except requests.exceptions.HTTPError as he:
@@ -74,15 +90,11 @@ def get_inventory(url, jsonfile):
 
 
 def process_inventory(filepath):
-    _load_json_from_file(filepath)
-
-
-def _load_json_from_file(filepath):
     if filepath is None:
         raise TypeError
 
     if not os.path.isfile(filepath):
-        logging.error("The file does not exist or the path is incorrect, %s", io)
+        logging.error("The file does not exist, %s", io)
         raise IOError
 
     logging.info("Loading %s", filepath)
@@ -148,13 +160,14 @@ def print_filesize(directory):
         raise TypeError
 
     if not os.path.isdir(directory):
-        logging.error("The directory does not exist or the path is incorrect, %s", io)
+        logging.error("The directory does not exist, %s", io)
         raise IOError
 
     try:
         files = os.listdir(directory)
         for a_file in files:
-            print "file: " + a_file + ", size: " + str(os.path.getsize(directory + a_file))
+            print "\nfile: " + a_file
+            print "size: " + str(os.path.getsize(directory + a_file))
     except IOError as io:
         logging.error("An error has occurred with writing file, %s", io)
 
@@ -170,10 +183,13 @@ def run():
         INV_FILENAME = DEFAULT_WORKFLOW[0].get("filename")
         INVENTORY_URL = DEFAULT_WORKFLOW[0].get("input")
         INV_JSON_FILE = DEFAULT_WORKFLOW[1].get("filename")
-        RUN_STATS_ON_COLUMN_NAME = DEFAULT_WORKFLOW[2].get("extra")[0].get("column_name")
+        RUN_STATS_ON_COLUMN_NAME = (DEFAULT_WORKFLOW[2].get("extra")[0]
+                                    .get("column_name"))
         STATS_JSON_FILE = DEFAULT_WORKFLOW[2].get("filename")
 
-        get_inventory(INVENTORY_URL + INV_FILENAME, OUTPUT_DIR + INV_JSON_FILE)
+        response_text = get_inventory(INVENTORY_URL + INV_FILENAME,
+                                      OUTPUT_DIR + INV_JSON_FILE)
+        _output_to_json_file(OUTPUT_DIR + INV_JSON_FILE, response_text)
         inventory = process_inventory(OUTPUT_DIR + INV_JSON_FILE)
         run_statistics_on_column(inventory, RUN_STATS_ON_COLUMN_NAME,
                                  OUTPUT_DIR + STATS_JSON_FILE)
