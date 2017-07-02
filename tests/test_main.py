@@ -2,7 +2,6 @@
 
 import unittest
 import requests_mock
-import requests
 from mock import mock_open, patch
 import sys
 import os
@@ -20,7 +19,7 @@ class WorkflowTests(unittest.TestCase):
     @patch("json.load")
     @patch("__builtin__.open", new_callable=mock_open())
     def test_process_inventory(self, m, m_json, isfile):
-        return_value = workflow.process_inventory("file.json")
+        workflow.process_inventory("file.json")
         m.assert_called_with("file.json", "r")
 
 
@@ -28,7 +27,7 @@ class WorkflowTests(unittest.TestCase):
     @patch("json.load")
     @patch("__builtin__.open", new_callable=mock_open())
     def test_load_settings(self, m, m_json, isfile):
-        return_value = workflow.load_settings("file.json")
+        workflow.load_settings("file.json")
         m.assert_called_with("file.json", "r")
 
 

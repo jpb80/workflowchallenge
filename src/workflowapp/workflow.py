@@ -37,7 +37,7 @@ def load_settings(filepath):
         raise TypeError
 
     if not os.path.isfile(filepath):
-        logging.error("The file does not exist, %s", io)
+        logging.error("The file does not exist, %s", filepath)
         raise IOError
 
     logging.info("Loading configuation settings from %s", filepath)
@@ -160,7 +160,7 @@ def print_filesize(directory):
         raise TypeError
 
     if not os.path.isdir(directory):
-        logging.error("The directory does not exist, %s", io)
+        logging.error("The directory does not exist, %s", directory)
         raise IOError
 
     try:
