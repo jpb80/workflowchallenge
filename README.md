@@ -1,4 +1,5 @@
 # Workflow Challenge Program
+Author: Jordan Buttkevitz
 
 ## Compile requirements
   * python 2.7
