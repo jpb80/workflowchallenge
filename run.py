@@ -1,5 +1,8 @@
-import sys
-sys.path.insert(0, "./src/workflowapp/")
+import os, sys
+
+FILE_PATH = os.path.realpath(__file__)
+head, tail = os.path.split(FILE_PATH)
+sys.path.insert(0, head + "/src/workflowapp/")
 
 import workflow
 
