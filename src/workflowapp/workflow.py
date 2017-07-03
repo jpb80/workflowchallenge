@@ -31,10 +31,12 @@ def logger_config():
                                                     "%(message)s\n"))
 
 
-def load_settings(filepath):
-    if filepath is None:
-        logging.error("The filepath cannot be None")
-        raise TypeError("The filepath cannot be None")
+def setup(filepath, outputpath):
+    if filepath is None or outputpath is None:
+        logging.error("The filepath, outputpath cannot be None")
+        raise TypeError("The paths cannot be None")
+
+    _setup_output_dir(outputpath)
 
     if not os.path.isfile(filepath):
         logging.error("The file does not exist, %s", filepath)
@@ -48,6 +50,15 @@ def load_settings(filepath):
         return settings
     except IOError as io:
         logging.error("An error has occurred with reading file, %s", io)
+
+
+def _setup_output_dir(outputpath):
+    try:
+        if not os.path.isdir(outputpath):
+            os.mkdir(outputpath)
+    except OSError as ose:
+        logging.error("An error with creating output dir, %s", ose)
+        exit(1)
 
 
 def _output_to_json_file(output_filename, textfile):
@@ -131,7 +142,25 @@ def run_statistics_on_column(inventory, column_name, jsonfile):
         raise TypeError("inventory, column_name, or jsonfile cannot be None")
 
     values = list()
-    def _median(sorted_values):
+    for row_dict in inventory:
+        if row_dict is None:
+            logging.error("%s: The row_dict cannot be None", STEP)
+            raise TypeError("row_dict cannot be None")
+        row_value = row_dict.get(column_name)
+        if (row_value is None):
+            logging.error("%s: The column does not exist", STEP)
+            raise TypeError("column name cannot be None")
+        values.append(row_dict.get(column_name))
+
+    sorted_values = sorted(values, key=float, reverse=True)
+    values_dict = dict([("Maximum", _max(sorted_values)),
+                        ("Minimum", _min(sorted_values)),
+                        ("Median", _median(sorted_values))])
+
+    _write_to_file(jsonfile, values_dict)
+
+
+def _median(sorted_values):
         if sorted_values is None:
             logging.error("%s: The sorted_values list cannot be None", STEP)
             raise TypeError("sorted_values list cannot be None")
@@ -146,29 +175,22 @@ def run_statistics_on_column(inventory, column_name, jsonfile):
             result = float(sorted_values[size / 2])
         return result
 
-    def _max(sorted_values):
+
+def _max(sorted_values):
         if sorted_values is None:
             logging.error("%s: The sorted_values list cannot be None", STEP)
             raise TypeError("sorted_values list cannot be None")
         return float(sorted_values[0])
 
-    def _min(sorted_values):
+
+def _min(sorted_values):
         if sorted_values is None:
             logging.error("%s: The sorted_values list cannot be None", STEP)
             raise TypeError("sorted_values list cannot be None")
         return float(sorted_values[len(sorted_values) - 1])
 
-    for row_dict in inventory:
-        if row_dict is None:
-            logging.error("%s: The row_dict cannot be None", STEP)
-            raise TypeError("row_dict cannot be None")
-        values.append(row_dict.get(column_name))
 
-    sorted_values = sorted(values, key=float, reverse=True)
-    values_dict = dict([("Maximum", _max(sorted_values)),
-                        ("Minimum", _min(sorted_values)),
-                        ("Median", _median(sorted_values))])
-
+def _write_to_file(jsonfile, values_dict):
     try:
         with open(jsonfile, "w") as outfile:
             json.dump(values_dict, outfile)
@@ -202,11 +224,11 @@ def print_filesize(directory):
 def run():
     logger_config()
     DEFAULT_CONFIG_PATH = APP_DIR_PATH + "/config/workflows.json"
-    settings = load_settings(DEFAULT_CONFIG_PATH)
+    OUTPUT_DIR = APP_DIR_PATH + "/output/"
+    settings = setup(DEFAULT_CONFIG_PATH, OUTPUT_DIR)
 
     try:
         DEFAULT_WORKFLOW = settings[0].get("operations")
-        OUTPUT_DIR = APP_DIR_PATH + "/output/"
         INV_FILENAME = DEFAULT_WORKFLOW[0].get("filename")
         INVENTORY_URL = DEFAULT_WORKFLOW[0].get("input")
         INV_JSON_FILE = DEFAULT_WORKFLOW[1].get("filename")
