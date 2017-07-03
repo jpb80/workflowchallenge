@@ -28,17 +28,17 @@ def logger_config():
                                                     "%(filename)s: "
                                                     "%(funcName)s(): "
                                                     "%(lineno)d: "
-                                                    "%(message)s"))
-    logging.info("Started")
+                                                    "%(message)s\n"))
 
 
 def load_settings(filepath):
     if filepath is None:
-        raise TypeError
+        logging.error("The filepath cannot be None")
+        raise TypeError("The filepath cannot be None")
 
     if not os.path.isfile(filepath):
         logging.error("The file does not exist, %s", filepath)
-        raise IOError
+        raise IOError("The filepath is not a file")
 
     logging.info("Loading configuation settings from %s", filepath)
     settings = dict()
@@ -47,12 +47,16 @@ def load_settings(filepath):
             settings = json.load(f)
         return settings
     except IOError as io:
-        logging.error("An error has occ®urred with reading file, %s", io)
+        logging.error("An error has occurred with reading file, %s", io)
 
 
 def _output_to_json_file(output_filename, textfile):
+    STEP = "Workflow Step #1"
+    logging.info("%s: Export file to JSON.", STEP)
     if output_filename is None or textfile is None:
-        raise TypeError
+        logging.error("%s: The output_filename or textfile does not exist",
+                      STEP)
+        raise TypeError("output_filename, textfile cannot be None")
 
     logging.info("Reading file into the json file %s", output_filename)
     try:
@@ -62,12 +66,17 @@ def _output_to_json_file(output_filename, textfile):
             json.dump(list(reader), outfile, ensure_ascii=False,
                       sort_keys=True, indent=4)
     except IOError as io:
-        logging.error("An error has occurred with writing file, %s", io)
+        logging.error("%s: An error has occurred with writing file, %s",
+                      STEP, io)
 
 
 def get_inventory(url, jsonfile):
+    STEP = "Workflow Step #1"
+    logging.info("%s: Retrieve file from url.", STEP)
+
     if url is None or jsonfile is None:
-        raise TypeError
+        logging.error("%s: The url or jsonfile does not exist", STEP)
+        raise TypeError("url, jsonfile cannot be None")
 
     logging.info("Retrieve http request payload from %s", url)
     try:
@@ -75,27 +84,31 @@ def get_inventory(url, jsonfile):
         session_retries = Retry(
             total=MAX_RETRIES,
             backoff_factor=BACKOFF_FACTOR,
-            status_forcelist=[500, 502, 503, 504])
+            status_forcelist=[500, 502, 503, 504, 404, 403, 401])
         session.mount('http://', HTTPAdapter(max_retries=session_retries))
         response = session.get(url)
         return response.text
     except ValueError as ve:
-        logging.error("An error with requesting api, %s", ve)
+        logging.error("%s: An error with requesting api, %s", STEP, ve)
     except requests.exceptions.HTTPError as he:
-        logging.error("An httperror has occurred, %s", he)
+        logging.error("%s: An httperror has occurred, %s", STEP, he)
     except ConnectionError as ce:
-        logging.error("Max number of network retries, %s", ce)
+        logging.error("%s: Max number of network retries, %s", STEP, ce)
         logging.error("Exiting the program")
         exit(1)
 
 
 def process_inventory(filepath):
+    STEP = "Workflow Step #2"
+    logging.info("%s: Load the inventory JSON file.", STEP)
+
     if filepath is None:
-        raise TypeError
+        logging.error("%s: The filepath does not exit", STEP)
+        raise TypeError("filepath cannot be None")
 
     if not os.path.isfile(filepath):
-        logging.error("The file does not exist, %s", io)
-        raise IOError
+        logging.error("%s: The file does not exist, %s", STEP, filepath)
+        raise IOError("filepath is not a file")
 
     logging.info("Loading %s", filepath)
     try:
@@ -103,20 +116,25 @@ def process_inventory(filepath):
             inventory = json.load(jsonfile)
         return inventory
     except IOError as io:
-        logging.error("An error has occurred with loading file, %s", io)
+        logging.error("%s: An error has occurred with loading file, %s",
+                      STEP, io)
 
 
 def run_statistics_on_column(inventory, column_name, jsonfile):
+    STEP = "Workflow Step #3"
+    logging.info("%s: Getting the maximum, minimum, and median of dataset.",
+                 STEP)
+
     if inventory is None or column_name is None or jsonfile is None:
-        raise TypeError
+        logging.error("%s: inventory, column_name, jsonfile cannot be None",
+                      STEP)
+        raise TypeError("inventory, column_name, or jsonfile cannot be None")
 
-    logging.info("Run stats against column %s from the file %s",
-                 column_name, jsonfile)
     values = list()
-
     def _median(sorted_values):
         if sorted_values is None:
-            raise TypeError
+            logging.error("%s: The sorted_values list cannot be None", STEP)
+            raise TypeError("sorted_values list cannot be None")
         result = 0.0
         size = len(sorted_values)
         is_even = (size % 2 == 0)
@@ -130,17 +148,20 @@ def run_statistics_on_column(inventory, column_name, jsonfile):
 
     def _max(sorted_values):
         if sorted_values is None:
-            raise TypeError
+            logging.error("%s: The sorted_values list cannot be None", STEP)
+            raise TypeError("sorted_values list cannot be None")
         return float(sorted_values[0])
 
     def _min(sorted_values):
         if sorted_values is None:
-            raise TypeError
+            logging.error("%s: The sorted_values list cannot be None", STEP)
+            raise TypeError("sorted_values list cannot be None")
         return float(sorted_values[len(sorted_values) - 1])
 
     for row_dict in inventory:
         if row_dict is None:
-            raise TypeError
+            logging.error("%s: The row_dict cannot be None", STEP)
+            raise TypeError("row_dict cannot be None")
         values.append(row_dict.get(column_name))
 
     sorted_values = sorted(values, key=float, reverse=True)
@@ -156,12 +177,17 @@ def run_statistics_on_column(inventory, column_name, jsonfile):
 
 
 def print_filesize(directory):
+    STEP = "Workflow Step #4"
+    logging.info("%s: Printing the filesize to screen.", STEP)
+
     if directory is None:
-        raise TypeError
+        logging.error("%s: The directory does not exist", STEP)
+        raise TypeError("Missing directory")
 
     if not os.path.isdir(directory):
-        logging.error("The directory does not exist, %s", directory)
-        raise IOError
+        logging.error("%s: The directory path does not exist, %s",
+                      STEP, directory)
+        raise IOError("Directory path does not exist")
 
     try:
         files = os.listdir(directory)
@@ -169,7 +195,8 @@ def print_filesize(directory):
             print "\nfile: " + a_file
             print "size: " + str(os.path.getsize(directory + a_file))
     except IOError as io:
-        logging.error("An error has occurred with writing file, %s", io)
+        logging.error("%s: An error has occurred with writing file, %s",
+                      STEP, io)
 
 
 def run():

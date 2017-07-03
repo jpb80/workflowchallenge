@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import unittest
-import requests_mock
 from mock import mock_open, patch
 import sys
 import os
@@ -31,13 +30,10 @@ class WorkflowTests(unittest.TestCase):
         m.assert_called_with("file.json", "r")
 
 
-    # @requests_mock.Mocker()
-    # def test_get_inventory(self, m):
-    #     m.get('http://test.com', text='data')
-    #     response = requests.get("http://test.com").text
-    #     workflow.get_inventory("http://test.com", "path")
-    #     m.assert_called_with("http://test.com")
-
+    @patch("requests.Session.get")
+    def test_get_inventory(self, m):
+        workflow.get_inventory("url", "jsonfile")
+        m.assert_called_with("url")
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(WorkflowTests)
